@@ -1,0 +1,113 @@
+<let/depth=5/>
+<let/distortion=0.5/>
+<page-size/{ width, height }/>
+<const/canvasHeight=height/>
+<const/canvasWidth=Math.floor(width / 2)/>
+
+<canvas/left width=canvasWidth height=height/>
+<canvas/right width=canvasWidth height=height/>
+
+<video-feed onUpdate(video) {
+  const videoAspect = video.videoWidth / video.videoHeight;
+  const canvasAspect = canvasWidth / canvasHeight;
+  
+  let drawWidth, drawHeight, offsetX, offsetY;
+
+  if (videoAspect > canvasAspect) {
+    drawHeight = canvasHeight;
+    drawWidth = drawHeight * videoAspect;
+    offsetX = (canvasWidth - drawWidth) / 2;
+    offsetY = 0;
+  } else {
+    drawWidth = canvasWidth;
+    drawHeight = drawWidth / videoAspect;
+    offsetX = 0;
+    offsetY = (canvasHeight - drawHeight) / 2;
+  }
+
+  const leftCtx = left().getContext('2d')!;
+  const rightCtx = right().getContext('2d')!;
+  
+  leftCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+  rightCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+  
+  const renderSettings: Omit<DistortedVideoInput, "ctx" | "offsetX"> = {
+    video,
+    canvasWidth,
+    canvasHeight,
+    offsetY,
+    drawWidth,
+    drawHeight,
+    distortionAmount: distortion
+  }
+
+  renderDistortedVideo({
+    ...renderSettings,
+    offsetX: offsetX - depth,
+    ctx: leftCtx,
+  })
+
+  renderDistortedVideo({
+    ...renderSettings,
+    offsetX: offsetX + depth,
+    ctx: rightCtx,
+  })
+}/>
+
+static interface DistortedVideoInput {
+  video: HTMLVideoElement;
+  ctx: CanvasRenderingContext2D;
+  canvasWidth: number;
+  canvasHeight: number;
+  offsetX: number;
+  offsetY: number;
+  drawWidth: number;
+  drawHeight: number;
+  distortionAmount: number;
+}
+
+static function renderDistortedVideo({ video, ctx, canvasWidth, canvasHeight, offsetX, offsetY, drawWidth, drawHeight, distortionAmount }: DistortedVideoInput) {
+  ctx.save();
+
+  // Create barrel distortion effect for VR lenses
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight / 2;
+
+  // Apply barrel distortion by sampling the video in a distorted pattern
+  const imageData = ctx.createImageData(canvasWidth, canvasHeight);
+  const tempCanvas = document.createElement('canvas');
+  const tempCtx = tempCanvas.getContext('2d')!;
+  tempCanvas.width = canvasWidth;
+  tempCanvas.height = canvasHeight;
+
+  // Draw video to temp canvas first
+  tempCtx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
+  const sourceData = tempCtx.getImageData(0, 0, canvasWidth, canvasHeight);
+
+  // Apply barrel distortion
+  for (let y = 0; y < canvasHeight; y++) {
+    for (let x = 0; x < canvasWidth; x++) {
+      const dx = (x - centerX) / centerX;
+      const dy = (y - centerY) / centerY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Apply barrel distortion formula
+      const distortion = 1 + distortionAmount * distance * distance;
+      const sourceX = Math.round(centerX + dx * centerX / distortion);
+      const sourceY = Math.round(centerY + dy * centerY / distortion);
+      
+      if (sourceX >= 0 && sourceX < canvasWidth && sourceY >= 0 && sourceY < canvasHeight) {
+        const sourceIndex = (sourceY * canvasWidth + sourceX) * 4;
+        const targetIndex = (y * canvasWidth + x) * 4;
+        
+        imageData.data[targetIndex] = sourceData.data[sourceIndex];
+        imageData.data[targetIndex + 1] = sourceData.data[sourceIndex + 1];
+        imageData.data[targetIndex + 2] = sourceData.data[sourceIndex + 2];
+        imageData.data[targetIndex + 3] = sourceData.data[sourceIndex + 3];
+      }
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  ctx.restore();
+}

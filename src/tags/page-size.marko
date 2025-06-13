@@ -1,0 +1,12 @@
+let/width=0
+let/height=0
+
+script --
+  width = window.innerWidth;
+  height = window.innerHeight;
+  window.addEventListener('resize', () => {
+    width = window.innerWidth;
+    height = window.innerHeight;
+  }, { signal: $signal })
+
+return={ width, height }

@@ -1,0 +1,34 @@
+export interface Input {
+  onUpdate: (el: HTMLVideoElement) => void;
+}
+
+<script>
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: false,
+    video: {
+      width: { ideal: 1920 },
+      height: { ideal: 1080 },
+      facingMode: "environment",
+    },
+  });
+  video().srcObject = stream;
+</script>
+
+<let/frameCount=0/>
+<script>
+  if (frameCount) {
+    input.onUpdate(video());
+    frameCount++;
+  }
+</script>
+
+<video/video
+  width=0
+  height=0
+  muted
+  autoplay
+  playsinline
+  onLoadedData() {
+    frameCount++;
+  }
+/>
