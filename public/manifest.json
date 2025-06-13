@@ -1,0 +1,19 @@
+{
+  "name": "Zoomgle Cardboard",
+  "short_name": "Eye Swap",
+  "description": "Swap your eyes with someone else's",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "landscape",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "32x32",
+      "type": "image/x-icon",
+      "purpose": "any maskable"
+    }
+  ]
+}
