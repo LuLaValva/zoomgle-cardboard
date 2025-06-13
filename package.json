@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "dependencies": {
+    "@marko/run-adapter-static": "^2.0.0",
     "marko": "^6.0.21"
   },
   "devDependencies": {
