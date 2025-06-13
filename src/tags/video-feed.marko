@@ -17,7 +17,6 @@ export interface Input {
 <let/frameCount=0/>
 <script>
   if (frameCount) {
-    console.log(frameCount);
     input.onUpdate(video());
     frameCount++;
   }
@@ -30,6 +29,7 @@ export interface Input {
   autoplay
   playsinline
   onLoadedData() {
+    video().play()
     frameCount++;
   }
 />
